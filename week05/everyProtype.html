@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+    <script src="https://gw.alipayobjects.com/os/antv/pkg/_antv.g6-3.3.1/dist/g6.min.js"></script>
+</head>
+
+<body>
+    <div id="container"></div>
+    <script>
+        let root = {};
+        root.id = 'window';
+        root.name = 'window';
+        root.children = [];
+        let objects = [
+            "eval",
+            "isFinite",
+            "isNaN",
+            "parseFloat",
+            "parseInt",
+            "decodeURI",
+            "decodeURIComponent",
+            "encodeURI",
+            "encodeURIComponent",
+            "Array",
+            "Date",
+            "RegExp",
+            "Promise",
+            "Proxy",
+            "Map",
+            "WeakMap",
+            "Set",
+            "WeakSet",
+            "Function",
+            "Boolean",
+            "String",
+            "Number",
+            "Symbol",
+            "Object",
+            "Error",
+            "EvalError",
+            "RangeError",
+            "ReferenceError",
+            "SyntaxError",
+            "TypeError",
+            "URIError",
+            "ArrayBuffer",
+            "SharedArrayBuffer",
+            "DataView",
+            "Float32Array",
+            "Float64Array",
+            "Int8Array",
+            "Int16Array",
+            "Int32Array",
+            "Uint8Array",
+            "Uint16Array",
+            "Uint32Array",
+            "Uint8ClampedArray",
+            "Atomics",
+            "JSON",
+            "Math",
+            "Reflect"
+        ];
+        let globalThis = window;
+        objects.forEach(objkey => {
+            let root1 = {};
+            root1.id = `window.${objkey}`;
+            root1.name = objkey;
+            root1.children = [];
+            Object.getOwnPropertyNames(globalThis[objkey]).forEach((p) => {
+                let root2 = {};
+                root2.id = `window.${objkey}.${p}`;
+                root2.children = [];
+                let d = Object.getOwnPropertyDescriptor(globalThis[objkey], p);
+                if (p === 'prototype') {
+                    root2.name = p;
+                    Object.getOwnPropertyNames(globalThis[objkey][p]).forEach(sp => {
+                        let root3 = {};
+                        root3.id = `window.${objkey}.${p}.${sp}`;
+                        let dd = Object.getOwnPropertyDescriptor(globalThis[objkey][p], sp);
+                        if (dd.value !== null) {
+                            if (typeof dd.value === 'function') {
+                                console.log(objkey + '.' + p + '.' + sp + '()');
+                                root3.name = sp + '()';
+                            } else {
+                                console.log(objkey + '.' + p + '.' + sp);
+                                root3.name = sp;
+                            }
+                        }
+                        if (dd.get) {
+                            root3.name = sp + '.get()'
+                        }
+                        if (dd.set) {
+                            root3.name = sp + '.set()'
+                        }
+                        root2.children.push(root3);
+                    })
+                } else if (d.value !== null) {
+                    if (typeof d.value === 'function') {
+                        console.log(objkey + '.' + p + '()');
+                        root2.name = p + '()';
+                    } else {
+                        console.log(objkey + '.' + p);
+                        root2.name = p;
+                    };
+                } else if (d.get) {
+                    root2.name = p + '.get()';
+                } else if (d.set) {
+                    root2.name = p + '.set()';
+                }
+                root1.children.push(root2);
+            })
+            root.children.push(root1);
+        })
+        console.log(root);
+
+        const width = document.body.clientWidth;
+        const height = document.body.clientHeight;
+        const graph = new G6.TreeGraph({
+            container: 'container',
+            width,
+            height,
+            mixZoom: 1,
+            maxZoom: 1,
+            linkCenter: true,
+            modes: {
+                default: [
+                    {
+                        type: 'collapse-expand',
+                        onChange: function onChange(item, collapsed) {
+                            const data = item.get('model').data;
+                            data.collapsed = collapsed;
+                            return true;
+                        },
+                    },
+                    'drag-canvas',
+                    'zoom-canvas',
+                ],
+            },
+            defaultNode: {
+                size: 26,
+                style: {
+                    fill: '#C6E5FF',
+                    stroke: '#5B8FF9',
+                },
+            },
+            defaultEdge: {
+                style: {
+                    stroke: '#A3B1BF',
+                },
+            },
+            layout: {
+                type: 'dendrogram',
+                direction: 'LR',
+                nodeSep: 20,
+                rankSep: 1000,
+                radial: true,
+            },
+        });
+
+        graph.node(function (node) {
+            return {
+                label: node.name,
+            };
+        });
+
+        graph.data(root);
+        graph.render();
+        graph.fitView();
+    </script>
+</body>
+
+</html>
